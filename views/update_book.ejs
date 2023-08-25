@@ -1,0 +1,62 @@
+
+<!-- include header -->
+<%- include('include/_header') %>
+<!-- /include header -->
+
+
+  <!-- Main Site -->
+  <main id="site-main">
+    <div class="container">
+        <div class="box-nav d-flex justify-between">
+           <div class="filter">
+               <a href="/"><i class="fas fa-angle-double-left"></i> All Users</a>
+           </div>
+        </div>
+        <div class="form-title text-center">
+            <h2 class="text-dark">Update User</h2>
+            <span class="text-light">Use the below form to Update an account</span>
+        </div>
+<!-- <--------------------------------------> 
+ <form action="POST" method="POST" id="add_user">
+    <div class="new_user">
+        <div class="form-group">
+            <label for="Name" class="text-light">Book ID</label>
+            <input type="hidden" name="id" value="">
+            <input type="text" name="bookid" value="" placeholder="Harry Potter">
+        </div>
+        <div class="form-group">
+            <label for="Name" class="text-light">Book Name</label>
+            <input type="hidden" name="id" value="">
+            <input type="text" name="bookname" value="" placeholder="Harry Potter">
+        </div>
+        <div class="form-group">
+            <label for="Author" class="text-light">Author Name</label>
+            <input type="text" name="authorname" value="" placeholder=" J. K. Rowling">
+        </div>
+        <div class="form-group">
+            <label for="Price" class="text-light">Book Price</label>
+            <input type="text" name="bookprice" value="" placeholder="500">
+        </div>
+        <div class="form-group">
+            <label for="publisheddate" class="text-light">Published Date</label>
+            <input type="date" name="publisheddate" value="" >
+        </div>
+        <div class="form-group">
+            <label for="publisheddate" class="text-light">IsAvailable</label>
+            <select name="isavailable">
+                <option value="true">True</option>
+                <option value="false">False</option>
+            </select>
+        </div>
+    </div>
+</form>
+<!-- <-------------------------------------->
+
+
+    </div>
+</main>
+<!-- /Main Site -->
+
+<!-- include footer -->
+<%- include('include/_footer') %>
+<!-- /include footer -->

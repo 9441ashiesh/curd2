@@ -1,107 +1,145 @@
-var Userdb = require('../models/model')
+const AWS = require('aws-sdk');
+const { DbName, dynamoDB } = require('../database/db.config.js');
 
-exports.create=(req,res)=>{
-    //validate request
-    if(!req.body){
-        res.status(400).send({message:"Content can not be empty!"});
+// const dynamoDB = new AWS.DynamoDB.DocumentClient();
+
+exports.create = (req, res) => {
+    // Validate request
+    if (!req.body.BookID || !req.body.BookName || !req.body.AuthorName || !req.body.BookPrice || !req.body.PublishedDate) {
+        res.status(400).send({ message: "All fields are required!" });
         return;
     }
-    //new book
 
-    const book = new Userdb({
-        BookID:req.body.bookid,
-        BookName:req.body.bookname,
-        AuthorName:req.body.authorname,
-        BookPrice:req.body.bookprice,
-        PublishedDate:req.body.publisheddate,
-        IsAvailable:req.body.isavailable
-    })
-    //save book in the database
-    book
-        .save(book)
-        .then(data=>{
-            //res.send(data)
-            res.redirect('/add-book')
-        })
-        .catch(err=>{
-            res.status(500).send({
-                message:err.message || "Some error occured while creating a create operation"
-            });
-        });
-}
-
-exports.getBook=(req,res)=>{
-    Userdb.find()
-        .then(book=>res.send(book))
-        .catch(err=>{
-            res.status(500).send({message:err.message || "Error Occurred while retriving book information"})
-        })
-}
-
-exports.find=(req,res)=>{
-    //validate request
-    if(req.query.id){
-        const id=req.query.id;
-        Userdb.findById(id)
-            .then(data=>{
-                if(!data){
-                    res.status(404).send({message:"Not found book with id"+id})
-                }else{
-                    res.send(data)
-                }
-            })
-            .catch(err=>{
-                res.status(500).send({message:"Error retrieving book with id"+id})
-            })
+    const params = {
+        TableName: DbName, // Replace with your DynamoDB table name
+        Item: {
+            BookID: req.body.BookID,
+            BookName: req.body.BookName,
+            AuthorName: req.body.AuthorName,
+            BookPrice: req.body.BookPrice,
+            PublishedDate: req.body.PublishedDate,
         }
-    else{
-        Userdb.find()
-            .then(book=>{
-                res.send(book)
-            })
-            .catch(err=>{
-                res.status(500).send({message:err.message || "Error Occurred while retriving book information"})
-            })
-    }
-}
+    };
 
-exports.update=(req,res)=>{
-    if(!req.body){
-        return res
-            .status(400)
-            .send({message:"Data to update can not be empty"})
-    }
-    const id=req.params.id;
-    Userdb.findByIdAndUpdate(id,req.body,{useFindAndModify:false})
-        .then(data=>{
-            if(!data){
-                res.status(404).send({message:`Cannot Update book with ${id}.Maybe book not found`})
-            }else{
-                res.send(data)
-            }
-        })
-        .catch(err=>{
-            res.status(500).send({message:"Error Update book information"})
-        })
-        
-    
-}
-
-exports.delete=(req,res)=>{
-    const id=req.params.id;
-    Userdb.findByIdAndDelete(id)
-        .then(data=>{
-            if(!data){
-                res.status(404).send({message:`Cannot Delete with id ${id}.Maybe id is wrong`})
-            }else{
-                res.send({
-                    message:"book was deleted successfully!"
-                })
-            }
-        })
-        .catch(err=>{
+    dynamoDB.put(params, (err, data) => {
+        if (err) {
             res.status(500).send({
-                message:"Could not delete book with id="+id
+                message: err.message || "Some error occurred while creating a create operation"
             });
+        } else {
+            res.send(data);
+        }
+    });
+};
+
+//get all books
+exports.getBook = (req, res) => {
+    const params = {
+        TableName:DbName, // Replace with your DynamoDB table name
+    };
+
+    dynamoDB.scan(params, (err, data) => {
+        if (err) {
+            res.status(500).send({
+                message: err.message || "Some error occurred while retrieving books."
+            });
+        } else {
+            res.send(data.Items);
+        }
+    });
+};
+
+//get single book
+
+exports.find = (req, res) => {
+    //validate request
+    if (req.query.id) {
+        const id = req.query.id;
+        const params = {
+            TableName: DbName, // Replace with your DynamoDB table name
+            Key: {
+                BookID: id
+            }
+        };
+
+        dynamoDB.get(params, (err, data) => {
+            if (err) {
+                res.status(500).send({ message: "Error retrieving book with id " + id });
+            } else {
+                res.send(data.Item);
+            }
         });
-}
+    } else {
+        const params = {
+            TableName: DbName, // Replace with your DynamoDB table name
+        };
+
+        dynamoDB.scan(params, (err, data) => {
+            if (err) {
+                res.status(500).send({
+                    message: err.message || "Some error occurred while retrieving books."
+                });
+            } else {
+                res.send(data.Items);
+            }
+        });
+    }
+};
+
+//update a book
+
+exports.update = (req, res) => {
+    if (!req.body) {
+        res.status(400).send({ message: "All fields are required!" });
+        return;
+    }
+
+    const id = req.params.id;
+
+    const params = {
+        TableName: DbName, // Replace with your DynamoDB table name
+        Key: {
+            BookID: id
+        },
+        UpdateExpression: "set BookName = :BookName, AuthorName = :AuthorName, BookPrice = :BookPrice, PublishedDate = :PublishedDate",
+        ExpressionAttributeValues: {
+            ":BookName": req.body.BookName,
+            ":AuthorName": req.body.AuthorName,
+            ":BookPrice": req.body.BookPrice,
+            ":PublishedDate": req.body.PublishedDate,
+        },
+        ReturnValues: "UPDATED_NEW"
+    };
+
+    dynamoDB.update(params, (err, data) => {
+        if (err) {
+            res.status(500).send({ message: "Error updating book with id " + id });
+        } else {
+            res.send(data);
+        }
+    });
+};
+
+//delete a book
+
+exports.delete = (req, res) => {
+    const id = req.params.id;
+
+    const params = {
+        TableName: DbName, // Replace with your DynamoDB table name
+        Key: {
+            BookID: id
+        }
+    };
+
+    dynamoDB.delete(params, (err, data) => {
+        if (err) {
+            res.status(500).send({ message: "Could not delete book with id " + id });
+        } else {
+            res.send({
+                message: "Book deleted successfully!"
+            });
+        }
+    });
+};
+
