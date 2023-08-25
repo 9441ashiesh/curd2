@@ -30,6 +30,14 @@ exports.create=(req,res)=>{
         });
 }
 
+exports.getBook=(req,res)=>{
+    Userdb.find()
+        .then(book=>res.send(book))
+        .catch(err=>{
+            res.status(500).send({message:err.message || "Error Occurred while retriving book information"})
+        })
+}
+
 exports.find=(req,res)=>{
     //validate request
     if(req.query.id){
